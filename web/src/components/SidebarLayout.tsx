@@ -1,4 +1,5 @@
 // web/src/components/SidebarLayout.tsx
+'use client';
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,7 +17,12 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
   return (
     <div className="flex h-screen">
       <aside className="w-60 bg-gray-100 p-4">
-        <h2 className="text-xl font-semibold mb-6">FTTH Tools</h2>
+        {/* Home‑Logo / Link */}
+        <Link href="/" className="flex items-center mb-6">
+          <img src="/logo.png" alt="Logo" className="h-8 w-8 mr-2" />
+          <span className="text-xl font-semibold">FTTH Tools</span>
+        </Link>
+
         <nav className="space-y-2">
           {navItems.map((item) => {
             const active = pathname?.startsWith(item.href);
