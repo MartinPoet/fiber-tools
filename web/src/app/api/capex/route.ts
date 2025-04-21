@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // Neue Parameter
     costPlanung = 3,     // €/m
     costMaterial = 15,   // €/m
-    costDukt = 1.1,      // €/m
+    costDoku = 1.1,      // €/m
     costOther = 0.5,     // €/m
   } = await request.json();
 
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
   const totalLength =
     lengthAsphalt + lengthBefestigt + lengthUnbefestigt;
 
-  // Basiskosten (Planung, Material, Dukt, Sonstiges)
+  // Basiskosten (Planung, Material, Doku, Sonstiges)
   const baseTotal =
     totalLength * costPlanung +
     totalLength * costMaterial +
-    totalLength * costDukt +
+    totalLength * costDoku +
     totalLength * costOther;
 
   // Endsumme

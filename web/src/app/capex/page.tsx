@@ -15,7 +15,7 @@ export default function CapexPage() {
   // Basiskosten
   const [costPlanung, setCostPlanung]         = useState(3);
   const [costMaterial, setCostMaterial]       = useState(15);
-  const [costDukt, setCostDukt]               = useState(1.1);
+  const [costDoku, setCostDoku]               = useState(1.1);
   const [costOther, setCostOther]             = useState(0.5);
 
   const [result, setResult] = useState<{
@@ -39,7 +39,7 @@ export default function CapexPage() {
         costUnbefestigt,
         costPlanung,
         costMaterial,
-        costDukt,
+        costDoku,
         costOther,
       }),
     });
@@ -82,7 +82,7 @@ export default function CapexPage() {
         {[
           { label: 'Planung', cost: costPlanung, setCost: setCostPlanung },
           { label: 'Material', cost: costMaterial, setCost: setCostMaterial },
-          { label: 'Dukt', cost: costDukt, setCost: setCostDukt },
+          { label: 'Doku', cost: costDoku, setCost: setCostDoku },
           { label: 'Other', cost: costOther, setCost: setCostOther },
         ].map(({ label, cost, setCost }) => (
           <div key={label} className="flex items-center space-x-2">
