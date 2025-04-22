@@ -1,7 +1,7 @@
 // web/src/app/api/municipality/details/route.ts
 import { NextResponse } from 'next/server'
 // JSON direkt importieren dank resolveJsonModule
-import stats from '../../../../data/municipalityStats.json'
+import stats from '../../../../../data/municipalityStats.json'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
