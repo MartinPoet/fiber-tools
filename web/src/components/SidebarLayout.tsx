@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard' },
@@ -19,7 +20,14 @@ export default function SidebarLayout({ children }: { children: React.ReactNode 
       <aside className="w-60 bg-gray-100 p-4">
         {/* Home‑Logo / Link */}
         <Link href="/" className="flex items-center mb-6">
-          <img src="/logo.png" alt="Logo" className="h-8 w-8 mr-2" />
+        <Image
+            src="/logo.png"
+            alt="Logo"
+            width={32}
+            height={32}
+            priority
+            className="mr-2"
+          />
           <span className="text-xl font-semibold">FTTH Tools</span>
         </Link>
 
