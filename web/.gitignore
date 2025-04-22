@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 data/nexiga.csv
+data/nexiga.csv
