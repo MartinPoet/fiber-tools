@@ -1,6 +1,8 @@
 // web/src/app/api/address/route.ts
 import { NextResponse } from 'next/server';
-import { loadAddresses, Address } from './utils';
+// Importiere die voraggregierten Stats als JSON.
+// Vier Ebenen hoch, um vom API‑Ordner in web/data zu gelangen:
+import stats from '../../../../data/municipalityStats.json';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,30 +14,25 @@ export async function GET(request: Request) {
     );
   }
 
+  // Einfache Normalisierung auf 5 Stellen:
   const gkz = raw.padStart(5, '0');
-  const all: Address[] = loadAddresses().filter(addr => addr.GEMNR === gkz);
 
-  const count = all.length;
-  let homes = 0;
-  let sdu = 0;
-  let mdu = 0;
+  // JSON‑Objekt keyed by GKZ liefert direkt die Stats
+  // (count, homes, sdu, mdu)
+  const s = (stats as Record<string,{
+    count: number;
+    homes: number;
+    sdu: number;
+    mdu: number;
+  }>)[gkz];
 
-  all.forEach(addr => {
-    const hh = Number(addr.HH) || 0;
-    const fa = Number(addr.ANZFA) || 0;
-    const addressHomes = hh + fa;
-    homes += addressHomes;
-
-    if (addressHomes > 2) mdu += 1;
-    else sdu += 1;
-  });
-
-  if (count === 0) {
+  if (!s) {
     return NextResponse.json(
       { error: 'Keine Adressen für diese Gemeinde' },
       { status: 404 }
     );
   }
 
-  return NextResponse.json({ count, homes, sdu, mdu });
+  // Direkt zurückgeben – kein CSV‑Parsing im Runtime!
+  return NextResponse.json(s);
 }
