@@ -2,7 +2,8 @@
 import NextAuth from 'next-auth'
 import GitHubProvider from 'next-auth/providers/github'
 
-export const authOptions = {
+// authOptions darf hier NICHT exportiert werden
+const authOptions = {
   providers: [
     GitHubProvider({
       clientId: process.env.GITHUB_ID!,
@@ -12,6 +13,6 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 }
 
-// NextAuth als Route‑Handler exportieren
 const handler = NextAuth(authOptions)
+// nur diese beiden Handler exportieren:
 export { handler as GET, handler as POST }
