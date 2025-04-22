@@ -1,47 +1,79 @@
 'use client'
 
-import React, { useState } from 'react';
-import SidebarLayout from '@/components/SidebarLayout';
+import React, { useState } from 'react'
+import SidebarLayout from '@/components/SidebarLayout'
 
 interface Municipality {
-  GKZ: string;
-  Gemeindename: string;
-  Bundesland: string;
+  GKZ: string
+  Gemeindename: string
+  Bundesland: string
 }
 
 export default function MunicipalityPage() {
-  const [query, setQuery] = useState<string>('');
-  const [result, setResult] = useState<Municipality | Municipality[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [query, setQuery] = useState<string>('')
+  const [result, setResult] = useState<Municipality | Municipality[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
 
+  // Stats‑State: count, homes, sdu, mdu
+  const [stats, setStats] = useState<{
+    count: number
+    homes: number
+    sdu: number
+    mdu: number
+  } | null>(null)
+  const [statsLoading, setStatsLoading] = useState<boolean>(false)
+
+  // Gemeinde suchen
   const handleSearch = async () => {
-    setLoading(true);
-    setError(null);
-    setResult(null);
+    setLoading(true)
+    setError(null)
+    setResult(null)
+    setStats(null)
     try {
-      const res = await fetch(`/api/municipality?gkz=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/municipality?gkz=${encodeURIComponent(query)}`)
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `Fehler: ${res.status}`);
+        const err = await res.json()
+        throw new Error(err.error || `Fehler: ${res.status}`)
       }
-      const data = await res.json() as Municipality | { results: Municipality[] };
-      if ('results' in data) {
-        setResult(data.results);
-      } else {
-        setResult(data);
-      }
+      const data = (await res.json()) as Municipality | { results: Municipality[] }
+      setResult('results' in data ? data.results : data)
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Unbekannter Fehler';
-      setError(message);
+      setError(e instanceof Error ? e.message : 'Unbekannter Fehler')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  // Address‑Stats laden
+  const loadStats = async () => {
+    if (!result || Array.isArray(result)) return
+    setStatsLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(`/api/address?gkz=${result.GKZ}`)
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || `Fehler: ${res.status}`)
+      }
+      const data = await res.json() as {
+        count: number
+        homes: number
+        sdu: number
+        mdu: number
+      }
+      setStats(data)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Unbekannter Fehler')
+    } finally {
+      setStatsLoading(false)
+    }
+  }
 
   return (
     <SidebarLayout>
       <h1 className="text-2xl font-bold mb-4">Gemeinde‑Suche</h1>
+
       <div className="flex space-x-2 mb-6">
         <input
           type="text"
@@ -73,23 +105,50 @@ export default function MunicipalityPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white shadow rounded p-4">
-            <h2 className="text-xl font-semibold mb-2">{result.Gemeindename}</h2>
-            <table className="w-full table-auto">
-              <tbody>
-                <tr>
-                  <th className="text-left p-1">GKZ</th>
-                  <td className="p-1">{result.GKZ}</td>
-                </tr>
-                <tr>
-                  <th className="text-left p-1">Bundesland</th>
-                  <td className="p-1">{result.Bundesland}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="bg-white shadow rounded p-4">
+              <h2 className="text-xl font-semibold mb-2">{result.Gemeindename}</h2>
+              <table className="w-full table-auto">
+                <tbody>
+                  <tr>
+                    <th className="text-left p-1">GKZ</th>
+                    <td className="p-1">{result.GKZ}</td>
+                  </tr>
+                  <tr>
+                    <th className="text-left p-1">Bundesland</th>
+                    <td className="p-1">{result.Bundesland}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              onClick={loadStats}
+              disabled={statsLoading}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {statsLoading ? 'Lade…' : 'Statistiken anzeigen'}
+            </button>
+
+            {stats && (
+              <div className="mt-6 bg-white shadow rounded p-4">
+                <p>
+                  Anzahl Adressen: <strong>{stats.count.toLocaleString()}</strong>
+                </p>
+                <p>
+                  Homes: <strong>{stats.homes.toLocaleString()}</strong>
+                </p>
+                <p>
+                  SDU: <strong>{stats.sdu.toLocaleString()}</strong>
+                </p>
+                <p>
+                  MDU: <strong>{stats.mdu.toLocaleString()}</strong>
+                </p>
+              </div>
+            )}
+          </>
         )
       )}
     </SidebarLayout>
-  );
+  )
 }
