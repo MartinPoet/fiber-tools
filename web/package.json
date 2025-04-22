@@ -1,8 +1,10 @@
+
 {
   "name": "web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "git lfs pull",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
