@@ -1,7 +1,9 @@
-import React from 'react';
-import Link from 'next/link';
+'use client'
+import { signIn, signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
 
 export default function LandingPage() {
+  const { data: session } = useSession()
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Hero Section */}
@@ -13,9 +15,22 @@ export default function LandingPage() {
           <p className="mt-4 text-lg md:text-xl text-gray-700">
             Kostenfreie und kostenpflichtige Tools für effizienten Glasfaserausbau in Österreich.
           </p>
-          <Link href="/capex" className="inline-block mt-6 px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700">
-            Jetzt starten
-          </Link>
+          {/* Conditional Login/Logout Button */}
+          {session ? (
+            <button
+              onClick={() => signOut()}
+              className="inline-block mt-6 px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700"
+            >
+              Abmelden
+            </button>
+          ) : (
+            <button
+              onClick={() => signIn('github')}
+              className="inline-block mt-6 px-6 py-3 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700"
+            >
+              Einloggen
+            </button>
+          )}
         </div>
         <div className="w-full md:w-1/2 flex justify-center">
           {/* Placeholder for hero image */}
@@ -61,5 +76,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  );
+  )
 }
