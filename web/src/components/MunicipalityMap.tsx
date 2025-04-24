@@ -6,8 +6,14 @@ import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet'
 import type { FeatureCollection, Geometry } from 'geojson'
 import L from 'leaflet'
 
-// Fix für das Standard-Icon (Leaflet-Assets liegen in public/leaflet/)
-;(delete (L.Icon.Default.prototype as any)._getIconUrl)
+// Workaround: leaflets Default icon holds a private `_getIconUrl` we need to delete.
+// We cast to this interface instead of `any`.
+interface IconDefaultPrototype {
+  _getIconUrl?: () => string
+}
+
+delete (L.Icon.Default.prototype as IconDefaultPrototype)._getIconUrl
+
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: '/leaflet/marker-icon-2x.png',
   iconUrl: '/leaflet/marker-icon.png',
@@ -24,7 +30,6 @@ export default function MunicipalityMap({ lat, lng, gkz }: MapProps) {
   const [boundary, setBoundary] = useState<FeatureCollection<Geometry> | null>(null)
 
   useEffect(() => {
-    // Lädt das GeoJSON für die angefragte GKZ
     fetch(`/geom/${gkz}.geojson`)
       .then(res => {
         if (!res.ok) throw new Error('Grenzdaten nicht gefunden')
@@ -38,18 +43,11 @@ export default function MunicipalityMap({ lat, lng, gkz }: MapProps) {
   }, [gkz])
 
   return (
-    <MapContainer
-      center={[lat, lng]}
-      zoom={12}
-      className="h-full w-full rounded-lg"
-    >
+    <MapContainer center={[lat, lng]} zoom={12} className="h-full w-full rounded-lg">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {boundary && (
-        <GeoJSON
-          data={boundary}
-          style={{ color: '#10B981', weight: 2 }}
-        />
+        <GeoJSON data={boundary} style={{ color: '#10B981', weight: 2 }} />
       )}
 
       <Marker position={[lat, lng]}>
