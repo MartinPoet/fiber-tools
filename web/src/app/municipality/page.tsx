@@ -21,7 +21,7 @@ export default function MunicipalityPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
 
-  // Stats‑State: count, homes, sdu, mdu
+  // Stats-State: count, homes, sdu, mdu
   const [stats, setStats] = useState<{
     count: number
     homes: number
@@ -30,8 +30,9 @@ export default function MunicipalityPage() {
   } | null>(null)
   const [statsLoading, setStatsLoading] = useState<boolean>(false)
 
-  // Coord‑State für die Karte
+  // Coord-State für die Karte + Bürgermeister
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [buergermeister, setBuergermeister] = useState<string | null>(null)
 
   // Gemeinde suchen
   const handleSearch = async () => {
@@ -40,6 +41,7 @@ export default function MunicipalityPage() {
     setResult(null)
     setStats(null)
     setCoords(null)
+    setBuergermeister(null)
     try {
       const res = await fetch(`/api/municipality?gkz=${encodeURIComponent(query)}`)
       if (!res.ok) {
@@ -55,7 +57,7 @@ export default function MunicipalityPage() {
     }
   }
 
-  // Address‑Stats und Geo‑Daten laden
+  // Address-Stats und Geo-Daten laden
   const loadStats = async () => {
     if (!result || Array.isArray(result)) return
     setStatsLoading(true)
@@ -75,11 +77,19 @@ export default function MunicipalityPage() {
       }
       setStats(data)
 
-      // Geo‑Koordinaten laden
+      // Geo-Koordinaten + Bürgermeister laden
       const geoRes = await fetch(`/api/municipality/details?gkz=${result.GKZ}`)
       if (geoRes.ok) {
-        const geo = (await geoRes.json()) as { lat: number; lng: number }
+        const geo = (await geoRes.json()) as {
+          lat: number
+          lng: number
+          buergermeister?: string | null
+        }
         setCoords({ lat: geo.lat, lng: geo.lng })
+        setBuergermeister(geo.buergermeister ?? null)
+      } else {
+        const err = await geoRes.json()
+        throw new Error(err.error || `Fehler Geo: ${geoRes.status}`)
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unbekannter Fehler')
@@ -90,7 +100,7 @@ export default function MunicipalityPage() {
 
   return (
     <SidebarLayout>
-      <h1 className="text-2xl font-bold mb-4">Gemeinde‑Suche</h1>
+      <h1 className="text-2xl font-bold mb-4">Gemeinde-Suche</h1>
 
       {/* Suchformular */}
       <div className="flex space-x-2 mb-6">
@@ -159,6 +169,9 @@ export default function MunicipalityPage() {
                 <div className="flex flex-col md:flex-row md:space-x-6">
                   {/* Stats links */}
                   <div className="md:w-1/3 space-y-2">
+                    {buergermeister && (
+                      <p>Bürgermeister: <strong>{buergermeister}</strong></p>
+                    )}
                     <p>Anzahl Adressen: <strong>{stats.count.toLocaleString()}</strong></p>
                     <p>Homes:          <strong>{stats.homes.toLocaleString()}</strong></p>
                     <p>SDU:            <strong>{stats.sdu.toLocaleString()}</strong></p>
@@ -167,7 +180,12 @@ export default function MunicipalityPage() {
 
                   {/* Karte rechts, quadratisch */}
                   <div className="md:w-2/3 w-full aspect-square">
-                    <MunicipalityMap lat={coords.lat} lng={coords.lng} />
+                    {/* jetzt mit gkz */}
+                    <MunicipalityMap
+                      lat={coords.lat}
+                      lng={coords.lng}
+                      gkz={result.GKZ}
+                    />
                   </div>
                 </div>
               </div>
