@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server'
 import stats from '../../../../../data/municipalityStats.json'
 // Bürgermeister-Daten aus eurer BGM Übersicht.json
 import bgmJson from '../../../../../data/BGM Übersicht.json'
+// Office-Daten (Telefon, E-Mail, Homepage) aus eurem bgm_info_all.json
+import officeData from '../../../../../data/bgm_info_all.json'
 
 /**
  * Ein Eintrag in den Geo-Daten:
@@ -38,6 +40,18 @@ interface BgmJson {
   data: BgmRawItem[]
 }
 
+/**
+ * Ein Eintrag in euren zusätzlichen Office-Daten
+ */
+interface OfficeEntry {
+  office_name?: string | null
+  address?: string | null
+  telefon?: string | null
+  fax?: string | null
+  email?: string | null
+  homepage?: string | null
+}
+
 // Castet die statisch importierten JSON-Objekte auf unsere Typen
 const statsMap = stats as StatsMap
 const bgmData = (bgmJson as BgmJson).data
@@ -66,17 +80,28 @@ export async function GET(request: Request) {
     )
   }
 
-  // BGM-Lookup
+  // BGM-Lookup (Bürgermeister)
   const bgm = bgmMap[gkz] ?? null
   const buergermeister = bgm
     ? `${bgm.a5} ${bgm.a7} ${bgm.a8}`
     : null
 
+  // Office-Lookup (Telefon, E-Mail, Homepage)
+  const office: OfficeEntry = officeData[gkz] ?? {}
+  const telefon = office.telefon ?? null
+  const fax = office.fax ?? null
+  const email = office.email ?? null
+  const homepage = office.homepage ?? null
+
   return NextResponse.json(
     {
       lat: entry.lat,
       lng: entry.lng,
-      buergermeister
+      buergermeister,
+      telefon,
+      fax,
+      email,
+      homepage
     },
     { status: 200 }
   )

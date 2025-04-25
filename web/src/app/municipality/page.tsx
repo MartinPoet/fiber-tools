@@ -15,6 +15,14 @@ interface Municipality {
   Bundesland: string
 }
 
+interface ContactInfo {
+  buergermeister: string | null
+  telefon: string | null
+  fax: string | null
+  email: string | null
+  homepage: string | null
+}
+
 export default function MunicipalityPage() {
   const [query, setQuery] = useState<string>('')
   const [result, setResult] = useState<Municipality | Municipality[] | null>(null)
@@ -30,9 +38,11 @@ export default function MunicipalityPage() {
   } | null>(null)
   const [statsLoading, setStatsLoading] = useState<boolean>(false)
 
-  // Coord-State für die Karte + Bürgermeister
+  // Coord-State für die Karte
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
-  const [buergermeister, setBuergermeister] = useState<string | null>(null)
+
+  // Kontakt-Info (Bgm, Telefon, E-Mail, Homepage)
+  const [contact, setContact] = useState<ContactInfo | null>(null)
 
   // Gemeinde suchen
   const handleSearch = async () => {
@@ -41,7 +51,7 @@ export default function MunicipalityPage() {
     setResult(null)
     setStats(null)
     setCoords(null)
-    setBuergermeister(null)
+    setContact(null)
     try {
       const res = await fetch(`/api/municipality?gkz=${encodeURIComponent(query)}`)
       if (!res.ok) {
@@ -57,7 +67,7 @@ export default function MunicipalityPage() {
     }
   }
 
-  // Address-Stats und Geo-Daten laden
+  // Address-Stats, Geo-Daten und Kontakt-Info laden
   const loadStats = async () => {
     if (!result || Array.isArray(result)) return
     setStatsLoading(true)
@@ -69,27 +79,34 @@ export default function MunicipalityPage() {
         const err = await res.json()
         throw new Error(err.error || `Fehler: ${res.status}`)
       }
-      const data = (await res.json()) as {
+      const statData = (await res.json()) as {
         count: number
         homes: number
         sdu: number
         mdu: number
       }
-      setStats(data)
+      setStats(statData)
 
-      // Geo-Koordinaten + Bürgermeister laden
+      // Geo-Koordinaten und Kontakt-Info laden
       const geoRes = await fetch(`/api/municipality/details?gkz=${result.GKZ}`)
       if (geoRes.ok) {
         const geo = (await geoRes.json()) as {
           lat: number
           lng: number
-          buergermeister?: string | null
+          buergermeister: string | null
+          telefon: string | null
+          fax: string | null
+          email: string | null
+          homepage: string | null
         }
         setCoords({ lat: geo.lat, lng: geo.lng })
-        setBuergermeister(geo.buergermeister ?? null)
-      } else {
-        const err = await geoRes.json()
-        throw new Error(err.error || `Fehler Geo: ${geoRes.status}`)
+        setContact({
+          buergermeister: geo.buergermeister,
+          telefon: geo.telefon,
+          fax: geo.fax,
+          email: geo.email,
+          homepage: geo.homepage
+        })
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Unbekannter Fehler')
@@ -140,7 +157,7 @@ export default function MunicipalityPage() {
             {/* Einzelansicht */}
             <div className="bg-white shadow rounded p-4">
               <h2 className="text-xl font-semibold mb-2">{result.Gemeindename}</h2>
-              <table className="w-full table-auto">
+              <table className="w-full table-auto mb-4">
                 <tbody>
                   <tr>
                     <th className="text-left p-1">GKZ</th>
@@ -163,24 +180,67 @@ export default function MunicipalityPage() {
               {statsLoading ? 'Lade…' : 'Statistiken & Karte anzeigen'}
             </button>
 
-            {/* Stats + Karte in einer Box */}
-            {stats && coords && (
+            {/* Stats + Kontakt + Karte in einer Box */}
+            {stats && coords && contact && (
               <div className="mt-6 bg-white shadow rounded p-4">
                 <div className="flex flex-col md:flex-row md:space-x-6">
-                  {/* Stats links */}
+                  {/* Linke Spalte: Kontakt & Stats */}
                   <div className="md:w-1/3 space-y-2">
-                    {buergermeister && (
-                      <p>Bürgermeister: <strong>{buergermeister}</strong></p>
+                    {contact.buergermeister && (
+                      <p>
+                        Bürgermeister: <strong>{contact.buergermeister}</strong>
+                      </p>
                     )}
-                    <p>Anzahl Adressen: <strong>{stats.count.toLocaleString()}</strong></p>
-                    <p>Homes:          <strong>{stats.homes.toLocaleString()}</strong></p>
-                    <p>SDU:            <strong>{stats.sdu.toLocaleString()}</strong></p>
-                    <p>MDU:            <strong>{stats.mdu.toLocaleString()}</strong></p>
+                    {contact.telefon && (
+                      <p>
+                        Telefon:{' '}
+                        <a href={`tel:${contact.telefon}`} className="underline">
+                          {contact.telefon}
+                        </a>
+                      </p>
+                    )}
+                    {contact.email && (
+                      <p>
+                        E-Mail:{' '}
+                        <a href={`mailto:${contact.email}`} className="underline">
+                          {contact.email}
+                        </a>
+                      </p>
+                    )}
+                    {contact.homepage && (
+                      <p>
+                        Homepage:{' '}
+                        <a
+                          href={contact.homepage}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline"
+                        >
+                          {contact.homepage}
+                        </a>
+                      </p>
+                    )}
+                    <hr className="my-2" />
+                    <p>
+                      Anzahl Adressen:{' '}
+                      <strong>{stats.count.toLocaleString()}</strong>
+                    </p>
+                    <p>
+                      Homes:{' '}
+                      <strong>{stats.homes.toLocaleString()}</strong>
+                    </p>
+                    <p>
+                      SDU:{' '}
+                      <strong>{stats.sdu.toLocaleString()}</strong>
+                    </p>
+                    <p>
+                      MDU:{' '}
+                      <strong>{stats.mdu.toLocaleString()}</strong>
+                    </p>
                   </div>
 
                   {/* Karte rechts, quadratisch */}
                   <div className="md:w-2/3 w-full aspect-square">
-                    {/* jetzt mit gkz */}
                     <MunicipalityMap
                       lat={coords.lat}
                       lng={coords.lng}
