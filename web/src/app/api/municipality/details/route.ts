@@ -6,8 +6,8 @@ import { NextResponse } from 'next/server'
 import stats from '../../../../../data/municipalityStats.json'
 // Bürgermeister-Daten aus eurer BGM Übersicht.json
 import bgmJson from '../../../../../data/BGM Übersicht.json'
-// Office-Daten (Telefon, E-Mail, Homepage) aus eurem bgm_info_all.json
-import officeData from '../../../../../data/bgm_info_all.json'
+// Kontakt-Infos aus eurem bgm_info_all.json
+import contactJson from '../../../../../data/bgm_info_all.json'
 
 /**
  * Ein Eintrag in den Geo-Daten:
@@ -41,20 +41,22 @@ interface BgmJson {
 }
 
 /**
- * Ein Eintrag in euren zusätzlichen Office-Daten
+ * Struktur für die Kontakt-Infos
  */
-interface OfficeEntry {
-  office_name?: string | null
-  address?: string | null
-  telefon?: string | null
-  fax?: string | null
-  email?: string | null
-  homepage?: string | null
+interface ContactInfo {
+  office_name: string
+  address: string | null
+  telefon: string
+  fax: string | null
+  email: string | null
+  homepage: string | null
 }
 
 // Castet die statisch importierten JSON-Objekte auf unsere Typen
 const statsMap = stats as StatsMap
 const bgmData = (bgmJson as BgmJson).data
+// erstes cast auf unknown, dann auf Record<string,ContactInfo>, um TS-Fehler wegen null-Werten zu umgehen
+const contactMap = (contactJson as unknown) as Record<string, ContactInfo>
 
 // Erstelle ein Lookup: GKZ (5-stellig) → BgmRawItem
 const bgmMap: Record<string, BgmRawItem> = {}
@@ -80,18 +82,17 @@ export async function GET(request: Request) {
     )
   }
 
-  // BGM-Lookup (Bürgermeister)
+  // BGM-Lookup
   const bgm = bgmMap[gkz] ?? null
   const buergermeister = bgm
     ? `${bgm.a5} ${bgm.a7} ${bgm.a8}`
     : null
 
-  // Office-Lookup (Telefon, E-Mail, Homepage)
-  const office: OfficeEntry = officeData[gkz] ?? {}
-  const telefon = office.telefon ?? null
-  const fax = office.fax ?? null
-  const email = office.email ?? null
-  const homepage = office.homepage ?? null
+  // Kontakt-Lookup
+  const contact = contactMap[gkz] ?? null
+  const telefon = contact?.telefon ?? null
+  const email = contact?.email ?? null
+  const homepage = contact?.homepage ?? null
 
   return NextResponse.json(
     {
@@ -99,7 +100,6 @@ export async function GET(request: Request) {
       lng: entry.lng,
       buergermeister,
       telefon,
-      fax,
       email,
       homepage
     },
