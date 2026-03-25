@@ -1,19 +1,18 @@
 // web/middleware.ts
-import { withAuth } from 'next-auth/middleware'
+// Note: Firebase Auth is handled client-side via AuthContext
+// This middleware is kept minimal - route protection is done in components
 
-export default withAuth({
-  pages: {
-    signIn: '/', // Umgeleitet wird auf deine Landing‑Page
-  },
-})
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Hier legst du fest, welche Routen geschützt sind:
+export function middleware(request: NextRequest) {
+  // Pass through all requests
+  // Client-side auth check is handled by components
+  return NextResponse.next()
+}
+
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/capex/:path*',
-    '/restoration/:path*',
-    '/municipality/:path*',
-    '/competitors/:path*',
+    '/atlas/:path*',
   ],
 }
